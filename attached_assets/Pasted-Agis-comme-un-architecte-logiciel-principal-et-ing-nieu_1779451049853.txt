@@ -1,0 +1,48 @@
+Agis comme un architecte logiciel principal et ingénieur Full-Stack expert. Je veux créer un prototype de niveau industriel (MVP de grade bancaire) pour notre plateforme de crédit "SOLVY". L'application doit refléter un logiciel de banque privée moderne.
+
+---
+### DESIGN SYSTEM & ERGONOMIE (UX/UI)
+- Thème Couleur : Luxueux Rouge Bordeaux (Dominant, professionnel) et Crème (Arrière-plan, doux), avec des accents de gris ardoise, vert épuré pour les succès et rouge vif pour les alertes.
+- Structure de Navigation : Pas de fil d'ariane type e-commerce. Utilise une barre de navigation latérale fixe (Sidebar) professionnelle avec des icônes claires. Le contenu principal respire au centre avec des marges globales (max-w-7xl mx-auto px-6 py-8) et des cartes élégantes à coins arrondis et ombres légères. Aucun bouton traditionnel à deux trous (utiliser des boutons pleins, des switchs ou des clips graphiques épurés).
+
+---
+### ÉCRAN D'ACCÈS SECURISE (LOGIN & ROLES RBAC)
+1. Écran de Connexion (Portail d'entrée) : Formulaire d'authentification propre avec Identifiant, Mot de passe et une mention visuelle explicite "Double authentification MFA active via Microsoft Authenticator".
+2. Sélecteur de profil en haut (pour la démo) permettant de basculer entre 4 espaces strictement étanches avec des droits d'accès (RBAC) spécifiques :
+
+---
+### 1. ESPACE CONSEILLER BANCAIRE (Instruction & Saisie)
+- Formulaire complet de création de dossier : Identité client, vie pro (Statut CDI/CDD...), données financières (Revenus nets, autres revenus, charges fixes, patrimoine) et caractéristiques du crédit demandé (Montant, durée, objet, apport personnel).
+- Ingestion Documentaire : Zone de glisser-déposer visuelle pour simuler le téléversement des pièces (Justificatifs, bulletins) vers le Data Lake souverain.
+- Simulation du flux réel : Lors de la soumission, le système calcule et affiche une estimation instantanée (Ex: "Avis indicatif : Favorable"). Cependant, le dossier ne peut pas être validé immédiatement ; un bouton "Transmettre au service Risque pour validation" pousse obligatoirement le dossier à l'analyste.
+
+---
+### 2. ESPACE ANALYSTE RISQUE (Décision & KPIs Visuels)
+- Tableau de bord de suivi du pipeline des dossiers en attente.
+- Écran d'instruction financière détaillé avec KPIs graphiques :
+  * Une jauge semi-circulaire (type tachymètre avec aiguille) indiquant visuellement le positionnement du Score de solvabilité (Échelle 0 à 1000).
+  * Un indicateur visuel fort pour le Taux d'endettement calculé (Alerte si > 35%).
+- Section "Contrôles Automatisés (APIs)" : Statuts Vert/Rouge des requêtes temps réel : Banque de France (FICP/FCC), bases PPE et listes LCB-FT.
+- Moteur de Scoring Officiel : Code en dur la formule de score basée sur la régression logistique en calculant le ratio d'endettement et le reste à vivre à partir des entrées. Affiche la Probabilité de Défaut (PD Flottant [0,1]) et la liste ordonnée des "Top 3 facteurs explicatifs du score" (Explicabilité RGPD Art. 22).
+- Formulaire de Décision finale : Menu déroulant (Accord / Refus / Conditionnel) avec saisie de commentaire obligatoire.
+
+---
+### 3. ESPACE ADMINISTRATEUR DATA, INFRASTRUCTURE & CLOUD
+Cet espace doit rendre visible l'architecture technique sous-jacente du projet (PostgreSQL, Azure, OVHcloud) :
+- Onglet "Gestion de la Base de Données" : Visualisation interactive des schémas de tables PostgreSQL (Entités : Client, Dossier, Historique de scoring). Bouton pour simuler une requête de synchronisation ou de nettoyage des données (Data Quality Rules : déduplication, complétude).
+- Onglet "Gouvernance & Référentiels" : Visualisation du dictionnaire de données actif.
+- Onglet "Infrastructure & Sécurité Cloud" : Graphiques en direct (Histogrammes ou courbes) simulant l'état des serveurs Azure AKS et du stockage objet OVHcloud SecNumCloud (Consommation CPU, espace disque). Bouton pour simuler la "Rotation des clés de chiffrement cryptographiques" dans Azure Key Vault et un bouton pour simuler la "Réplication asynchrone vers la région de secours (Marseille)".
+
+---
+### 4. ESPACE SERVICE CONFORMITÉ (Audit & RGPD)
+- Journal d'Audit Immuable (Logs) : Tableau d'affichage en temps réel et infalsifiable retraçant chaque action technique et métier du système chronologiquement (Format : Timestamp, Utilisateur, Rôle, Action, Statut). Exemple : "2026-05-22 14:15:00 - Administrateur SI - Rotation de la clé AES-256 effectuée dans Key Vault - Succès".
+- Gestion du Cycle de vie : Visualisation des dossiers archivés (Règle de conservation des 5 ans après clôture) et bouton d'action pour simuler une demande de purge au titre du "Droit à l'oubli / Effacement (Art. 17 RGPD)".
+
+---
+### DONNÉES DE DÉMONSTRATION INITIALES
+Injecte 3 dossiers fictifs par défaut pour rendre la démo vivante :
+1. Client Premium : CDI, revenus élevés, 0 incident BDF, score 880 (Avis favorable).
+2. Client Intermédiaire : Taux d'endettement à 34%, situation pro stable mais épargne limitée (Analyse humaine requise).
+3. Client Bloqué : Fiché FICP à la Banque de France ou taux d'endettement à 48% (Refus automatique ou blocage immédiat).
+
+Génère une application React moderne (avec Tailwind CSS, Lucide React pour les icônes, et des graphiques légers type Recharts pour les KPIs, jauges et métriques infra), avec un code modulaire et entièrement fonctionnel sur Replit.

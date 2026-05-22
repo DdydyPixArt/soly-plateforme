@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "SOLVY — Plateforme de Crédit"
+version = "1.0.0"
+id = "artifacts/solvy"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21860
+
+[services.development]
+run = "pnpm --filter @workspace/solvy run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/solvy", "run", "build" ]
+publicDir = "artifacts/solvy/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21860"
+BASE_PATH = "/"

@@ -1,22 +1,34 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SOLVY Credit Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: clients
+    description: Client management
+  - name: dossiers
+    description: Credit application dossiers
+  - name: decisions
+    description: Risk analyst decisions
+  - name: audit
+    description: Audit log
+  - name: scoring
+    description: Credit scoring engine
+  - name: infrastructure
+    description: Cloud infrastructure metrics
+  - name: dashboard
+    description: Dashboard summaries
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,326 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List all clients
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a new client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
+  /dossiers:
+    get:
+      operationId: listDossiers
+      tags: [dossiers]
+      summary: List all dossiers
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of dossiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dossier"
+    post:
+      operationId: createDossier
+      tags: [dossiers]
+      summary: Create a new credit dossier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DossierInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dossier"
+
+  /dossiers/{id}:
+    get:
+      operationId: getDossier
+      tags: [dossiers]
+      summary: Get a dossier by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dossier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dossier"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateDossier
+      tags: [dossiers]
+      summary: Update a dossier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DossierUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dossier"
+
+  /dossiers/{id}/submit:
+    post:
+      operationId: submitDossier
+      tags: [dossiers]
+      summary: Submit dossier to risk analyst
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dossier"
+
+  /dossiers/{id}/score:
+    get:
+      operationId: getDossierScore
+      tags: [scoring]
+      summary: Get scoring analysis for a dossier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Scoring result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringResult"
+
+  /decisions:
+    get:
+      operationId: listDecisions
+      tags: [decisions]
+      summary: List all analyst decisions
+      responses:
+        "200":
+          description: List of decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Decision"
+    post:
+      operationId: createDecision
+      tags: [decisions]
+      summary: Create a decision for a dossier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Decision"
+
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit log entries
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
+  /audit-logs/purge-request:
+    post:
+      operationId: requestDataPurge
+      tags: [audit]
+      summary: Request RGPD data purge (Art. 17)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurgeRequest"
+      responses:
+        "200":
+          description: Purge request recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLog"
+
+  /infrastructure/metrics:
+    get:
+      operationId: getInfraMetrics
+      tags: [infrastructure]
+      summary: Get simulated cloud infrastructure metrics
+      responses:
+        "200":
+          description: Infrastructure metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfraMetrics"
+
+  /infrastructure/rotate-keys:
+    post:
+      operationId: rotateEncryptionKeys
+      tags: [infrastructure]
+      summary: Simulate Azure Key Vault key rotation
+      responses:
+        "200":
+          description: Keys rotated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfraActionResult"
+
+  /infrastructure/replicate:
+    post:
+      operationId: triggerReplication
+      tags: [infrastructure]
+      summary: Simulate async replication to Marseille region
+      responses:
+        "200":
+          description: Replication triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfraActionResult"
+
+  /infrastructure/sync-db:
+    post:
+      operationId: syncDatabase
+      tags: [infrastructure]
+      summary: Simulate DB synchronization / data quality sweep
+      responses:
+        "200":
+          description: Sync triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfraActionResult"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/pipeline:
+    get:
+      operationId: getPipelineStats
+      tags: [dashboard]
+      summary: Get dossier pipeline breakdown
+      responses:
+        "200":
+          description: Pipeline stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PipelineItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +366,384 @@ components:
       required:
         - status
 
+    Client:
+      type: object
+      required: [id, nom, prenom, email, statut_pro, revenus_nets, charges_fixes, patrimoine, ficp, ppe, created_at]
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+        telephone:
+          type: ["string", "null"]
+        statut_pro:
+          type: string
+          description: "CDI, CDD, independant, retraite, sans_emploi"
+        revenus_nets:
+          type: number
+          description: Monthly net income in euros
+        autres_revenus:
+          type: ["number", "null"]
+        charges_fixes:
+          type: number
+        patrimoine:
+          type: ["number", "null"]
+        ficp:
+          type: boolean
+          description: Fichier incidents credit banque de France
+        ppe:
+          type: boolean
+          description: Personne politiquement exposee
+        lcb_ft:
+          type: boolean
+          description: LCB-FT compliance flag
+        created_at:
+          type: string
+
+    ClientInput:
+      type: object
+      required: [nom, prenom, email, statut_pro, revenus_nets, charges_fixes]
+      properties:
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+        telephone:
+          type: ["string", "null"]
+        statut_pro:
+          type: string
+        revenus_nets:
+          type: number
+        autres_revenus:
+          type: ["number", "null"]
+        charges_fixes:
+          type: number
+        patrimoine:
+          type: ["number", "null"]
+        ficp:
+          type: boolean
+        ppe:
+          type: boolean
+        lcb_ft:
+          type: boolean
+
+    Dossier:
+      type: object
+      required: [id, client_id, montant, duree_mois, objet, statut, avis_indicatif, created_at]
+      properties:
+        id:
+          type: integer
+        client_id:
+          type: integer
+        client:
+          $ref: "#/components/schemas/Client"
+        montant:
+          type: number
+        duree_mois:
+          type: integer
+        objet:
+          type: string
+        apport_personnel:
+          type: ["number", "null"]
+        statut:
+          type: string
+          description: "brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive"
+        avis_indicatif:
+          type: ["string", "null"]
+          description: "favorable, defavorable, analyse_requise"
+        documents:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+        updated_at:
+          type: ["string", "null"]
+
+    DossierInput:
+      type: object
+      required: [client_id, montant, duree_mois, objet]
+      properties:
+        client_id:
+          type: integer
+        montant:
+          type: number
+        duree_mois:
+          type: integer
+        objet:
+          type: string
+        apport_personnel:
+          type: ["number", "null"]
+        documents:
+          type: array
+          items:
+            type: string
+
+    DossierUpdate:
+      type: object
+      properties:
+        montant:
+          type: number
+        duree_mois:
+          type: integer
+        objet:
+          type: string
+        apport_personnel:
+          type: ["number", "null"]
+        documents:
+          type: array
+          items:
+            type: string
+
+    ScoringResult:
+      type: object
+      required: [dossier_id, score, probabilite_defaut, taux_endettement, reste_a_vivre, avis, top_facteurs, controles_api]
+      properties:
+        dossier_id:
+          type: integer
+        score:
+          type: integer
+          description: Solvency score 0-1000
+        probabilite_defaut:
+          type: number
+          description: Probability of default [0,1]
+        taux_endettement:
+          type: number
+          description: Debt ratio as decimal (e.g. 0.32 = 32%)
+        reste_a_vivre:
+          type: number
+          description: Monthly remaining income after charges
+        avis:
+          type: string
+          description: "favorable, defavorable, analyse_requise"
+        top_facteurs:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacteurExplicatif"
+        controles_api:
+          $ref: "#/components/schemas/ControlesAPI"
+
+    FacteurExplicatif:
+      type: object
+      required: [rang, facteur, impact, direction]
+      properties:
+        rang:
+          type: integer
+        facteur:
+          type: string
+        impact:
+          type: number
+        direction:
+          type: string
+          description: "positif, negatif"
+
+    ControlesAPI:
+      type: object
+      required: [banque_de_france, ppe_check, lcb_ft_check]
+      properties:
+        banque_de_france:
+          type: string
+          description: "ok, alerte, erreur"
+        ppe_check:
+          type: string
+        lcb_ft_check:
+          type: string
+
+    Decision:
+      type: object
+      required: [id, dossier_id, analyste, verdict, commentaire, created_at]
+      properties:
+        id:
+          type: integer
+        dossier_id:
+          type: integer
+        analyste:
+          type: string
+        verdict:
+          type: string
+          description: "accord, refus, conditionnel"
+        commentaire:
+          type: string
+        conditions:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    DecisionInput:
+      type: object
+      required: [dossier_id, analyste, verdict, commentaire]
+      properties:
+        dossier_id:
+          type: integer
+        analyste:
+          type: string
+        verdict:
+          type: string
+        commentaire:
+          type: string
+        conditions:
+          type: ["string", "null"]
+
+    AuditLog:
+      type: object
+      required: [id, timestamp, utilisateur, role, action, statut]
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+        utilisateur:
+          type: string
+        role:
+          type: string
+        action:
+          type: string
+        statut:
+          type: string
+          description: "succes, echec"
+        details:
+          type: ["string", "null"]
+        ip_address:
+          type: ["string", "null"]
+
+    PurgeRequest:
+      type: object
+      required: [client_id, motif]
+      properties:
+        client_id:
+          type: integer
+        motif:
+          type: string
+
+    InfraMetrics:
+      type: object
+      required: [azure_aks, ovhcloud_storage, key_vault, replication_status]
+      properties:
+        azure_aks:
+          $ref: "#/components/schemas/AKSMetrics"
+        ovhcloud_storage:
+          $ref: "#/components/schemas/StorageMetrics"
+        key_vault:
+          $ref: "#/components/schemas/KeyVaultStatus"
+        replication_status:
+          $ref: "#/components/schemas/ReplicationStatus"
+        cpu_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricPoint"
+        storage_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricPoint"
+
+    AKSMetrics:
+      type: object
+      required: [cpu_percent, memory_percent, pods_running, pods_total, status]
+      properties:
+        cpu_percent:
+          type: number
+        memory_percent:
+          type: number
+        pods_running:
+          type: integer
+        pods_total:
+          type: integer
+        status:
+          type: string
+
+    StorageMetrics:
+      type: object
+      required: [used_gb, total_gb, percent_used, status]
+      properties:
+        used_gb:
+          type: number
+        total_gb:
+          type: number
+        percent_used:
+          type: number
+        status:
+          type: string
+
+    KeyVaultStatus:
+      type: object
+      required: [last_rotation, next_rotation, status, algorithm]
+      properties:
+        last_rotation:
+          type: string
+        next_rotation:
+          type: string
+        status:
+          type: string
+        algorithm:
+          type: string
+
+    ReplicationStatus:
+      type: object
+      required: [region, lag_ms, status, last_sync]
+      properties:
+        region:
+          type: string
+        lag_ms:
+          type: integer
+        status:
+          type: string
+        last_sync:
+          type: string
+
+    MetricPoint:
+      type: object
+      required: [time, value]
+      properties:
+        time:
+          type: string
+        value:
+          type: number
+
+    InfraActionResult:
+      type: object
+      required: [success, message, timestamp]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [total_dossiers, en_attente, approuves, refuses, conditionnels, taux_accord, montant_total_engage, score_moyen]
+      properties:
+        total_dossiers:
+          type: integer
+        en_attente:
+          type: integer
+        approuves:
+          type: integer
+        refuses:
+          type: integer
+        conditionnels:
+          type: integer
+        taux_accord:
+          type: number
+        montant_total_engage:
+          type: number
+        score_moyen:
+          type: number
+
+    PipelineItem:
+      type: object
+      required: [statut, count, label]
+      properties:
+        statut:
+          type: string
+        count:
+          type: integer
+        label:
+          type: string
