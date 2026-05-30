@@ -86,7 +86,8 @@ export const GetClientResponse = zod.object({
  * @summary List all dossiers
  */
 export const ListDossiersQueryParams = zod.object({
-  "status": zod.coerce.string().optional()
+  "status": zod.coerce.string().optional(),
+  "created_by": zod.coerce.string().optional()
 })
 
 export const ListDossiersResponseItem = zod.object({
@@ -115,6 +116,8 @@ export const ListDossiersResponseItem = zod.object({
   "statut": zod.string().describe('brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive'),
   "avis_indicatif": zod.string().nullable().describe('favorable, defavorable, analyse_requise'),
   "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish().describe('Login of the conseiller who created this dossier'),
+  "assigned_to": zod.string().nullish().describe('Login of the analyst currently working on this dossier'),
   "created_at": zod.string(),
   "updated_at": zod.string().nullish()
 })
@@ -130,7 +133,8 @@ export const CreateDossierBody = zod.object({
   "duree_mois": zod.number(),
   "objet": zod.string(),
   "apport_personnel": zod.number().nullish(),
-  "documents": zod.array(zod.string()).optional()
+  "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish()
 })
 
 
@@ -167,6 +171,8 @@ export const GetDossierResponse = zod.object({
   "statut": zod.string().describe('brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive'),
   "avis_indicatif": zod.string().nullable().describe('favorable, defavorable, analyse_requise'),
   "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish().describe('Login of the conseiller who created this dossier'),
+  "assigned_to": zod.string().nullish().describe('Login of the analyst currently working on this dossier'),
   "created_at": zod.string(),
   "updated_at": zod.string().nullish()
 })
@@ -213,6 +219,53 @@ export const UpdateDossierResponse = zod.object({
   "statut": zod.string().describe('brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive'),
   "avis_indicatif": zod.string().nullable().describe('favorable, defavorable, analyse_requise'),
   "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish().describe('Login of the conseiller who created this dossier'),
+  "assigned_to": zod.string().nullish().describe('Login of the analyst currently working on this dossier'),
+  "created_at": zod.string(),
+  "updated_at": zod.string().nullish()
+})
+
+
+/**
+ * @summary Claim a dossier for analysis (assign to analyst)
+ */
+export const ClaimDossierParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ClaimDossierBody = zod.object({
+  "analyste_login": zod.string(),
+  "analyste_nom": zod.string()
+})
+
+export const ClaimDossierResponse = zod.object({
+  "id": zod.number(),
+  "client_id": zod.number(),
+  "client": zod.object({
+  "id": zod.number(),
+  "nom": zod.string(),
+  "prenom": zod.string(),
+  "email": zod.string(),
+  "telephone": zod.string().nullish(),
+  "statut_pro": zod.string().describe('CDI, CDD, independant, retraite, sans_emploi'),
+  "revenus_nets": zod.number().describe('Monthly net income in euros'),
+  "autres_revenus": zod.number().nullish(),
+  "charges_fixes": zod.number(),
+  "patrimoine": zod.number().nullable(),
+  "ficp": zod.boolean().describe('Fichier incidents credit banque de France'),
+  "ppe": zod.boolean().describe('Personne politiquement exposee'),
+  "lcb_ft": zod.boolean().optional().describe('LCB-FT compliance flag'),
+  "created_at": zod.string()
+}).optional(),
+  "montant": zod.number(),
+  "duree_mois": zod.number(),
+  "objet": zod.string(),
+  "apport_personnel": zod.number().nullish(),
+  "statut": zod.string().describe('brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive'),
+  "avis_indicatif": zod.string().nullable().describe('favorable, defavorable, analyse_requise'),
+  "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish().describe('Login of the conseiller who created this dossier'),
+  "assigned_to": zod.string().nullish().describe('Login of the analyst currently working on this dossier'),
   "created_at": zod.string(),
   "updated_at": zod.string().nullish()
 })
@@ -251,6 +304,8 @@ export const SubmitDossierResponse = zod.object({
   "statut": zod.string().describe('brouillon, en_attente_risque, en_cours_analyse, approuve, refuse, conditionnel, archive'),
   "avis_indicatif": zod.string().nullable().describe('favorable, defavorable, analyse_requise'),
   "documents": zod.array(zod.string()).optional(),
+  "created_by": zod.string().nullish().describe('Login of the conseiller who created this dossier'),
+  "assigned_to": zod.string().nullish().describe('Login of the analyst currently working on this dossier'),
   "created_at": zod.string(),
   "updated_at": zod.string().nullish()
 })
@@ -429,6 +484,38 @@ export const GetDashboardStatsResponse = zod.object({
   "taux_accord": zod.number(),
   "montant_total_engage": zod.number(),
   "score_moyen": zod.number()
+})
+
+
+/**
+ * @summary Get current scoring engine settings
+ */
+export const GetScoringSettingsResponse = zod.object({
+  "taux_endettement_max": zod.number(),
+  "score_accord_auto": zod.number(),
+  "score_refus_auto": zod.number(),
+  "reste_a_vivre_min": zod.number(),
+  "duree_max_mois": zod.number()
+})
+
+
+/**
+ * @summary Update scoring engine settings
+ */
+export const UpdateScoringSettingsBody = zod.object({
+  "taux_endettement_max": zod.number(),
+  "score_accord_auto": zod.number(),
+  "score_refus_auto": zod.number(),
+  "reste_a_vivre_min": zod.number(),
+  "duree_max_mois": zod.number()
+})
+
+export const UpdateScoringSettingsResponse = zod.object({
+  "taux_endettement_max": zod.number(),
+  "score_accord_auto": zod.number(),
+  "score_refus_auto": zod.number(),
+  "reste_a_vivre_min": zod.number(),
+  "duree_max_mois": zod.number()
 })
 
 

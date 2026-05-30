@@ -13,6 +13,8 @@ export const dossiersTable = pgTable("dossiers", {
   statut: text("statut").notNull().default("brouillon"),
   avis_indicatif: text("avis_indicatif"),
   documents: jsonb("documents").$type<string[]>().default([]),
+  created_by: text("created_by").default("sophie.martin"),
+  assigned_to: text("assigned_to"),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at"),
 });

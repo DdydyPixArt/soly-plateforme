@@ -8,6 +8,7 @@
 
 export * from './aKSMetrics';
 export * from './auditLog';
+export * from './claimDossierInput';
 export * from './client';
 export * from './clientInput';
 export * from './controlesAPI';
@@ -28,4 +29,5 @@ export * from './pipelineItem';
 export * from './purgeRequest';
 export * from './replicationStatus';
 export * from './scoringResult';
+export * from './scoringSettings';
 export * from './storageMetrics';

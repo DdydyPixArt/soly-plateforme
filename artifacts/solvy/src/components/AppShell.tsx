@@ -1,13 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { useRole, type Role } from "@/lib/role-context";
+import { useAuth, type Role } from "@/lib/auth-context";
 import {
   FileText, Upload, LayoutDashboard, BarChart2,
-  Database, BookOpen, Server, Shield, Archive,
-  ChevronDown, LogOut, Building2
+  Database, Server, Shield, Archive,
+  LogOut, Building2, Users, Settings, ChevronRight, AlertTriangle
 } from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface NavItem {
   label: string;
@@ -15,65 +12,64 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const roleConfig: Record<Role, { label: string; nav: NavItem[]; defaultHref: string }> = {
+const roleNav: Record<Role, { section: string; nav: NavItem[]; defaultHref: string }> = {
   conseiller: {
-    label: "Conseiller Bancaire",
-    defaultHref: "/conseiller/dossiers",
+    section: "Conseiller Bancaire",
+    defaultHref: "/conseiller/dashboard",
     nav: [
+      { label: "Tableau de bord", href: "/conseiller/dashboard", icon: <LayoutDashboard size={16} /> },
       { label: "Mes dossiers", href: "/conseiller/dossiers", icon: <FileText size={16} /> },
-      { label: "Nouveau dossier", href: "/conseiller/nouveau-dossier", icon: <LayoutDashboard size={16} /> },
+      { label: "Nouveau dossier", href: "/conseiller/nouveau-dossier", icon: <ChevronRight size={16} /> },
       { label: "Documents", href: "/conseiller/documents", icon: <Upload size={16} /> },
     ],
   },
   analyste: {
-    label: "Analyste Risque",
+    section: "Analyste Risque",
     defaultHref: "/analyste/pipeline",
     nav: [
       { label: "Pipeline dossiers", href: "/analyste/pipeline", icon: <BarChart2 size={16} /> },
     ],
   },
   admin: {
-    label: "Administrateur Data",
-    defaultHref: "/admin/infrastructure",
+    section: "Administrateur SI",
+    defaultHref: "/admin/utilisateurs",
     nav: [
-      { label: "Base de données", href: "/admin/database", icon: <Database size={16} /> },
-      { label: "Gouvernance", href: "/admin/gouvernance", icon: <BookOpen size={16} /> },
-      { label: "Infrastructure", href: "/admin/infrastructure", icon: <Server size={16} /> },
+      { label: "Utilisateurs & Habilitations", href: "/admin/utilisateurs", icon: <Users size={16} /> },
+      { label: "Paramètres Scoring", href: "/admin/scoring", icon: <Settings size={16} /> },
+      { label: "Infrastructure & Sécurité", href: "/admin/infrastructure", icon: <Server size={16} /> },
     ],
   },
   conformite: {
-    label: "Service Conformité",
+    section: "Service Conformité",
     defaultHref: "/conformite/audit",
     nav: [
-      { label: "Journal d'audit", href: "/conformite/audit", icon: <Shield size={16} /> },
-      { label: "Archives RGPD", href: "/conformite/archives", icon: <Archive size={16} /> },
+      { label: "Journal Système (Audit)", href: "/conformite/audit", icon: <Shield size={16} /> },
+      { label: "Cycle de vie & RGPD", href: "/conformite/archives", icon: <Archive size={16} /> },
     ],
   },
 };
 
-const roleLabels: Record<Role, string> = {
-  conseiller: "Conseiller Bancaire",
-  analyste: "Analyste Risque",
-  admin: "Administrateur Data",
-  conformite: "Service Conformité",
+const roleColors: Record<Role, string> = {
+  conseiller: "bg-blue-500/20 text-blue-200",
+  analyste: "bg-purple-500/20 text-purple-200",
+  admin: "bg-amber-500/20 text-amber-200",
+  conformite: "bg-emerald-500/20 text-emerald-200",
 };
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { role, setRole } = useRole();
-  const [location, setLocation] = useLocation();
-  const config = roleConfig[role];
+  const { user, logout } = useAuth();
+  const [location] = useLocation();
 
-  const handleRoleChange = (newRole: Role) => {
-    setRole(newRole);
-    setLocation(roleConfig[newRole].defaultHref);
-  };
+  if (!user) return null;
+
+  const config = roleNav[user.role];
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "hsl(40 30% 96%)" }}>
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-xl">
         {/* Logo */}
-        <div className="px-6 py-6 border-b border-sidebar-border/40">
+        <div className="px-6 py-5 border-b border-sidebar-border/40">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
               <Building2 size={18} className="text-white" />
@@ -85,32 +81,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Role Selector */}
-        <div className="px-4 py-3 border-b border-sidebar-border/40">
-          <p className="text-xs text-white/40 uppercase tracking-widest mb-2 px-2">Profil actif</p>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                data-testid="role-selector"
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-sm text-white font-medium"
-              >
-                <span className="truncate">{roleLabels[role]}</span>
-                <ChevronDown size={14} className="text-white/60 flex-shrink-0 ml-2" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 ml-2" align="start">
-              {(Object.keys(roleLabels) as Role[]).map((r) => (
-                <DropdownMenuItem
-                  key={r}
-                  data-testid={`role-option-${r}`}
-                  onClick={() => handleRoleChange(r)}
-                  className={role === r ? "bg-accent" : ""}
-                >
-                  {roleLabels[r]}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* User identity */}
+        <div className="px-4 py-4 border-b border-sidebar-border/40">
+          <div className="px-3 py-2.5 rounded-xl bg-white/10">
+            <p className="text-sm font-semibold text-white">{user.displayName}</p>
+            <p className="text-xs text-white/50 mt-0.5">{user.login}</p>
+            <span className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full ${roleColors[user.role]}`}>
+              {config.section}
+            </span>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -138,20 +117,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Footer */}
         <div className="px-4 py-4 border-t border-sidebar-border/40">
-          <div className="flex items-center gap-2 px-3 py-2 text-xs text-white/40">
+          <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-white/40">
             <Shield size={12} />
             <span>MFA actif — Microsoft Authenticator</span>
           </div>
-          <Link href="/login">
-            <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer mt-1">
-              <LogOut size={16} />
-              Déconnexion
-            </div>
-          </Link>
+          <button
+            onClick={logout}
+            data-testid="button-logout"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors mt-1"
+          >
+            <LogOut size={16} />
+            Déconnexion
+          </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main */}
       <main className="flex-1 overflow-auto">
         {children}
       </main>

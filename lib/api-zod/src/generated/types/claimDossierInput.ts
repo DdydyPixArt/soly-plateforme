@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ListDossiersParams = {
-status?: string;
-created_by?: string;
-};
+export interface ClaimDossierInput {
+  analyste_login: string;
+  analyste_nom: string;
+}

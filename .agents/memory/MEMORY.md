@@ -1,0 +1,1 @@
+- [SOLVY platform overview](solvy-overview.md) — auth, roles, routes, seeded demo users; key decisions for future work.

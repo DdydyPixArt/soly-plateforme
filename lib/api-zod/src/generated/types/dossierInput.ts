@@ -14,4 +14,6 @@ export interface DossierInput {
   /** @nullable */
   apport_personnel?: number | null;
   documents?: string[];
+  /** @nullable */
+  created_by?: string | null;
 }

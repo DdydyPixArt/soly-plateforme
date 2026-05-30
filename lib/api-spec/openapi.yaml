@@ -101,6 +101,11 @@ paths:
           required: false
           schema:
             type: string
+        - name: created_by
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: List of dossiers
@@ -167,6 +172,31 @@ paths:
       responses:
         "200":
           description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dossier"
+
+  /dossiers/{id}/claim:
+    post:
+      operationId: claimDossier
+      tags: [dossiers]
+      summary: Claim a dossier for analysis (assign to analyst)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimDossierInput"
+      responses:
+        "200":
+          description: Claimed
           content:
             application/json:
               schema:
@@ -341,6 +371,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardStats"
 
+  /scoring/settings:
+    get:
+      operationId: getScoringSettings
+      tags: [scoring]
+      summary: Get current scoring engine settings
+      responses:
+        "200":
+          description: Current scoring settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringSettings"
+    put:
+      operationId: updateScoringSettings
+      tags: [scoring]
+      summary: Update scoring engine settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoringSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoringSettings"
+
   /dashboard/pipeline:
     get:
       operationId: getPipelineStats
@@ -461,6 +521,12 @@ components:
           type: array
           items:
             type: string
+        created_by:
+          type: ["string", "null"]
+          description: Login of the conseiller who created this dossier
+        assigned_to:
+          type: ["string", "null"]
+          description: Login of the analyst currently working on this dossier
         created_at:
           type: string
         updated_at:
@@ -484,6 +550,8 @@ components:
           type: array
           items:
             type: string
+        created_by:
+          type: ["string", "null"]
 
     DossierUpdate:
       type: object
@@ -747,3 +815,27 @@ components:
           type: integer
         label:
           type: string
+
+    ClaimDossierInput:
+      type: object
+      required: [analyste_login, analyste_nom]
+      properties:
+        analyste_login:
+          type: string
+        analyste_nom:
+          type: string
+
+    ScoringSettings:
+      type: object
+      required: [taux_endettement_max, score_accord_auto, score_refus_auto, reste_a_vivre_min, duree_max_mois]
+      properties:
+        taux_endettement_max:
+          type: number
+        score_accord_auto:
+          type: number
+        score_refus_auto:
+          type: number
+        reste_a_vivre_min:
+          type: number
+        duree_max_mois:
+          type: number

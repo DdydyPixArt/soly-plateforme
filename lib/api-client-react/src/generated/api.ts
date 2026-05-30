@@ -21,6 +21,7 @@ import type {
 
 import type {
   AuditLog,
+  ClaimDossierInput,
   Client,
   ClientInput,
   DashboardStats,
@@ -35,7 +36,8 @@ import type {
   ListDossiersParams,
   PipelineItem,
   PurgeRequest,
-  ScoringResult
+  ScoringResult,
+  ScoringSettings
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -654,6 +656,78 @@ export const useUpdateDossier = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateDossierMutationOptions(options));
+    }
+
+export const getClaimDossierUrl = (id: number,) => {
+
+
+
+
+  return `/api/dossiers/${id}/claim`
+}
+
+/**
+ * @summary Claim a dossier for analysis (assign to analyst)
+ */
+export const claimDossier = async (id: number,
+    claimDossierInput: ClaimDossierInput, options?: RequestInit): Promise<Dossier> => {
+
+  return customFetch<Dossier>(getClaimDossierUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      claimDossierInput,)
+  }
+);}
+
+
+
+
+export const getClaimDossierMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimDossier>>, TError,{id: number;data: BodyType<ClaimDossierInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimDossier>>, TError,{id: number;data: BodyType<ClaimDossierInput>}, TContext> => {
+
+const mutationKey = ['claimDossier'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimDossier>>, {id: number;data: BodyType<ClaimDossierInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  claimDossier(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimDossierMutationResult = NonNullable<Awaited<ReturnType<typeof claimDossier>>>
+    export type ClaimDossierMutationBody = BodyType<ClaimDossierInput>
+    export type ClaimDossierMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Claim a dossier for analysis (assign to analyst)
+ */
+export const useClaimDossier = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimDossier>>, TError,{id: number;data: BodyType<ClaimDossierInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimDossier>>,
+        TError,
+        {id: number;data: BodyType<ClaimDossierInput>},
+        TContext
+      > => {
+      return useMutation(getClaimDossierMutationOptions(options));
     }
 
 export const getSubmitDossierUrl = (id: number,) => {
@@ -1462,6 +1536,154 @@ export function useGetDashboardStats<TData = Awaited<ReturnType<typeof getDashbo
 
 
 
+
+export const getGetScoringSettingsUrl = () => {
+
+
+
+
+  return `/api/scoring/settings`
+}
+
+/**
+ * @summary Get current scoring engine settings
+ */
+export const getScoringSettings = async ( options?: RequestInit): Promise<ScoringSettings> => {
+
+  return customFetch<ScoringSettings>(getGetScoringSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetScoringSettingsQueryKey = () => {
+    return [
+    `/api/scoring/settings`
+    ] as const;
+    }
+
+
+export const getGetScoringSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getScoringSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getScoringSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetScoringSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getScoringSettings>>> = ({ signal }) => getScoringSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getScoringSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetScoringSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getScoringSettings>>>
+export type GetScoringSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current scoring engine settings
+ */
+
+export function useGetScoringSettings<TData = Awaited<ReturnType<typeof getScoringSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getScoringSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetScoringSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateScoringSettingsUrl = () => {
+
+
+
+
+  return `/api/scoring/settings`
+}
+
+/**
+ * @summary Update scoring engine settings
+ */
+export const updateScoringSettings = async (scoringSettings: ScoringSettings, options?: RequestInit): Promise<ScoringSettings> => {
+
+  return customFetch<ScoringSettings>(getUpdateScoringSettingsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      scoringSettings,)
+  }
+);}
+
+
+
+
+export const getUpdateScoringSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScoringSettings>>, TError,{data: BodyType<ScoringSettings>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateScoringSettings>>, TError,{data: BodyType<ScoringSettings>}, TContext> => {
+
+const mutationKey = ['updateScoringSettings'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateScoringSettings>>, {data: BodyType<ScoringSettings>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateScoringSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateScoringSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateScoringSettings>>>
+    export type UpdateScoringSettingsMutationBody = BodyType<ScoringSettings>
+    export type UpdateScoringSettingsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update scoring engine settings
+ */
+export const useUpdateScoringSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScoringSettings>>, TError,{data: BodyType<ScoringSettings>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateScoringSettings>>,
+        TError,
+        {data: BodyType<ScoringSettings>},
+        TContext
+      > => {
+      return useMutation(getUpdateScoringSettingsMutationOptions(options));
+    }
 
 export const getGetPipelineStatsUrl = () => {
 

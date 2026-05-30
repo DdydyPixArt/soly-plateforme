@@ -69,6 +69,16 @@ export interface Dossier {
      */
   avis_indicatif: string | null;
   documents?: string[];
+  /**
+     * Login of the conseiller who created this dossier
+     * @nullable
+     */
+  created_by?: string | null;
+  /**
+     * Login of the analyst currently working on this dossier
+     * @nullable
+     */
+  assigned_to?: string | null;
   created_at: string;
   /** @nullable */
   updated_at?: string | null;
@@ -82,6 +92,8 @@ export interface DossierInput {
   /** @nullable */
   apport_personnel?: number | null;
   documents?: string[];
+  /** @nullable */
+  created_by?: string | null;
 }
 
 export interface DossierUpdate {
@@ -230,7 +242,21 @@ export interface PipelineItem {
   label: string;
 }
 
+export interface ClaimDossierInput {
+  analyste_login: string;
+  analyste_nom: string;
+}
+
+export interface ScoringSettings {
+  taux_endettement_max: number;
+  score_accord_auto: number;
+  score_refus_auto: number;
+  reste_a_vivre_min: number;
+  duree_max_mois: number;
+}
+
 export type ListDossiersParams = {
 status?: string;
+created_by?: string;
 };
 

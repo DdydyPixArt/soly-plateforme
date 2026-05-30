@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { useCreateClient, useCreateDossier, getListDossiersQueryKey, getListClientsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export default function NouveauDossierPage() {
   const [avisResult, setAvisResult] = useState<{ avis: string; client_id: number; dossier_id: number } | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const createClient = useCreateClient();
   const createDossier = useCreateDossier();
@@ -81,6 +83,7 @@ export default function NouveauDossierPage() {
             objet: values.objet,
             apport_personnel: values.apport_personnel ?? null,
             documents: [],
+            created_by: user?.login,
           }
         }, {
           onSuccess: (dossier) => {

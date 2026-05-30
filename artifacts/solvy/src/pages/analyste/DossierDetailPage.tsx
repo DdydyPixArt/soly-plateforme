@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, XCircle, AlertTriangle, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/lib/auth-context";
 
 function formatEur(n: number) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -98,20 +99,21 @@ export default function DossierDetailPage() {
   const [verdict, setVerdict] = useState("");
   const [commentaire, setCommentaire] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: dossier, isLoading: loadingDossier } = useGetDossier(id, {
     query: { enabled: !!id, queryKey: getGetDossierQueryKey(id) }
   });
   const { data: score, isLoading: loadingScore } = useGetDossierScore(id, {
-    query: { enabled: !!id }
+    query: { enabled: !!id, queryKey: ["dossier-score", id] }
   });
   const createDecision = useCreateDecision();
 
   const handleDecision = () => {
     if (!verdict) { toast({ title: "Verdict requis", variant: "destructive" }); return; }
     if (!commentaire.trim()) { toast({ title: "Commentaire obligatoire", variant: "destructive" }); return; }
-    createDecision.mutate({ data: { dossier_id: id, analyste: "M. Lefebvre — Analyste Senior", verdict, commentaire } }, {
+    createDecision.mutate({ data: { dossier_id: id, analyste: user?.displayName || "Analyste", verdict, commentaire } }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListDossiersQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetDossierQueryKey(id) });

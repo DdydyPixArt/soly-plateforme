@@ -1,0 +1,49 @@
+L’appli est très bien comme ça ne modifie rien qui ne soit pas demandé garde tout comme ça modifie seulement ce qui suit.
+
+---
+### 1. PAGE DE CONNEXION (LOGIN) - LE SEUL POINT D'ENTRÉE
+- Supprime définitivement le menu déroulant global qui permet de changer de rôle depuis le tableau de bord.
+- Crée une vraie page de connexion fonctionnelle : l'utilisateur DOIT entrer un identifiant et un mot de passe pour accéder à son espace. Le bouton "Se connecter" doit fonctionner et rediriger vers la bonne session.
+- Implémente 5 utilisateurs de démonstration codés en dur pour la connexion :
+  1. Identifiant: "sophie.martin", MDP: "password" -> Rôle: Conseiller Bancaire (Session Sophie Martin)
+  2. Identifiant: "marc.lefebvre", MDP: "password" -> Rôle: Conseiller Bancaire (Session Marc Lefebvre)
+  3. Identifiant: "jean.risque", MDP: "password" -> Rôle: Analyste Risque
+  4. Identifiant: "admin.si", MDP: "password" -> Rôle: Administrateur SI
+  5. Identifiant: "compliance.officer", MDP: "password" -> Rôle: Service Conformité
+- Affiche visuellement la mention "Double Authentification MFA Active via Microsoft Authenticator".
+
+---
+### 2. ESPACE CONSEILLER BANCAIRE (Sophie ou Marc - Strictement cloisonné)
+- ÉTANCHÉITÉ STRICTE : Si "sophie.martin" est connectée, elle ne voit QUE ses dossiers. Si "marc.lefebvre" est connecté, il ne voit QUE ses dossiers. Aucun mélange.
+- VRAI TABLEAU DE BORD (Dashboard) : La page d'accueil du conseiller doit déborder de chiffres et de KPIs graphiques (utilisant Recharts) :
+  * Un graphique en camembert (Pie Chart) montrant la répartition de ses dossiers par statut (En cours, Accepté, Refusé, Incomplet).
+  * Un histogramme (Bar Chart) des montants de crédits demandés ce mois-ci.
+  * Des fiches d'indicateurs (Cartes) : Nombre total de dossiers, Montant global en cours, alertes urgentes.
+- ONGLET "MES DOSSIERS" & CONSULTATION : Une table claire des dossiers. En cliquant sur un dossier, une vue détaillée s'ouvre pour CONSULTER toutes les informations saisies (Identité, revenus, charges, crédit).
+- ONGLET "DOSSIERS INCOMPLETS" : Affiche uniquement les dossiers où il manque des pièces. Quand on clique sur un dossier de cette liste, le système affiche textuellement la liste des documents justificatifs manquants (ex: "Avis d'imposition manquant").
+- ONGLET "NOUVEAU DOSSIER DE CRÉDIT" : 
+  * Formulaire complet (Identité, Vie pro, Revenus, Charges, Prêt demandé).
+  * EN BAS DU FORMULAIRE (Intégration Documentaire) : Liste des documents attendus (Pièce d'identité, 3 bulletins de paie, avis d'imposition). Ajoute un bouton de téléversement ("Glisser-déposer ou Parcourir") intégré pour chaque document, simulant l'ingestion sécurisée vers le Data Lake OVHcloud.
+  * Lors de la soumission, affiche un score indicatif immédiat à l'écran, mais force un bouton "Transmettre à l'analyse de risque" pour envoyer le dossier à l'étape suivante.
+
+---
+### 3. ESPACE ANALYSTE RISQUE (Gestion d'équipe & Reporting)
+- Tous les analystes voient le même portefeuille global, mais les dossiers s'attribuent dynamiquement :
+- ONGLET "DOSSIERS À TRAITER" : Liste des dossiers en attente. Dès qu'un analyste clique sur "Traiter le dossier", son nom (ex: "Jean Risque") lui est attribué. 
+- ONGLET "DOSSIERS EN COURS" : Liste des dossiers en cours de traitement. On peut les ouvrir, mais le système affiche clairement en haut : "Dossier en cours d'analyse par [Nom de l'analyste]" et bloque l'accès aux autres analystes.
+- ÉCRAN D'INSTRUCTION : Jauge semi-circulaire pour le score (0-1000), indicateur d'endettement (Alerte rouge si >35%), contrôles APIs (FICP/FCC/LCB-FT) et la formule de scoring réelle. Zone de décision (Accord/Refus/Conditionnel) avec commentaire.
+- ONGLET "REPORTING / DOSSIERS ANALYSÉS" : La liste de tous les dossiers traités par la banque, avec l'historique des décisions et le Nom de l'analyste qui a validé ou refusé le crédit.
+- ONGLET "CHRONOLOGIE DE L'ACTIVITÉ" : Une ligne du temps (Timeline) personnelle affichant l'historique des actions de l'analyste connecté (ex: "Il y a 10 min : Score calculé pour le dossier #102").
+
+---
+### 4. ESPACE ADMINISTRATEUR SI
+- ONGLET "UTILISATEURS & HABILITATIONS" : Une interface complète pour gérer l'équipe de la banque. Permet d'ajouter un utilisateur, de lui accorder un rôle (Conseiller, Analyste, Administrateur, Conformité), et des boutons d'action rapides pour "Mettre en pause" ou "Supprimer" des droits d'accès.
+- ONGLET "PARAMÈTRES DE SCORING" : Formulaire pour modifier les seuils du moteur de règles (ex: changer le taux d'endettement max de 35% à 33%, ou modifier le score minimal requis pour un accord automatique).
+- ONGLET "INFRASTRUCTURE & SÉCURITÉ" : Monitoring graphique en temps réel (Azure/OVHcloud, CPU, RAM). Boutons d'action pour : "Simuler la rotation des clés AES-256 (Key Vault)" et "Vérifier la réplication PostgreSQL (Marseille)".
+
+---
+### 5. ESPACE SERVICE CONFORMITÉ
+- ONGLET "JOURNAL SYSTÈME (AUDIT LOGS)" : Tableau complet, immuable et chronologique de toutes les activités de la plateforme pour les audits ACPR (Timestamp, Utilisateur, Action, Statut).
+- ONGLET "CYCLE DE VIE & RGPD" : Suivi des délais de rétention (5 ans). Bouton d'action pour simuler une demande de purge définitive au titre du "Droit à l'oubli (Art. 17 RGPD)".
+
+Génère cette application complète et interconnectée de manière à ce qu'on puisse naviguer de façon fluide et réaliste en se déconnectant et en se reconnectant avec les différents utilisateurs.

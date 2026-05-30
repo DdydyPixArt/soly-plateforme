@@ -24,6 +24,16 @@ export interface Dossier {
      */
   avis_indicatif: string | null;
   documents?: string[];
+  /**
+     * Login of the conseiller who created this dossier
+     * @nullable
+     */
+  created_by?: string | null;
+  /**
+     * Login of the analyst currently working on this dossier
+     * @nullable
+     */
+  assigned_to?: string | null;
   created_at: string;
   /** @nullable */
   updated_at?: string | null;
