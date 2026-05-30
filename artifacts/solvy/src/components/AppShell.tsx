@@ -3,7 +3,8 @@ import { useAuth, type Role } from "@/lib/auth-context";
 import {
   FileText, Upload, LayoutDashboard, BarChart2,
   Database, Server, Shield, Archive,
-  LogOut, Building2, Users, Settings, ChevronRight, AlertTriangle
+  LogOut, Building2, Users, Settings, ChevronRight,
+  List, TrendingUp, BookOpen, Activity
 } from "lucide-react";
 
 interface NavItem {
@@ -27,16 +28,20 @@ const roleNav: Record<Role, { section: string; nav: NavItem[]; defaultHref: stri
     section: "Analyste Risque",
     defaultHref: "/analyste/pipeline",
     nav: [
-      { label: "Pipeline dossiers", href: "/analyste/pipeline", icon: <BarChart2 size={16} /> },
+      { label: "Pipeline Risque", href: "/analyste/pipeline", icon: <Activity size={16} /> },
+      { label: "Tous les dossiers", href: "/analyste/dossiers", icon: <List size={16} /> },
+      { label: "Reporting Risque", href: "/analyste/reporting", icon: <BarChart2 size={16} /> },
     ],
   },
   admin: {
     section: "Administrateur SI",
-    defaultHref: "/admin/utilisateurs",
+    defaultHref: "/admin/dashboard",
     nav: [
+      { label: "Tableau de bord technique", href: "/admin/dashboard", icon: <LayoutDashboard size={16} /> },
       { label: "Utilisateurs & Habilitations", href: "/admin/utilisateurs", icon: <Users size={16} /> },
       { label: "Paramètres Scoring", href: "/admin/scoring", icon: <Settings size={16} /> },
       { label: "Infrastructure & Sécurité", href: "/admin/infrastructure", icon: <Server size={16} /> },
+      { label: "Data & Gouvernance", href: "/admin/data-gouvernance", icon: <Database size={16} /> },
     ],
   },
   conformite: {
@@ -96,11 +101,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="flex-1 px-4 py-4 space-y-1">
           <p className="text-xs text-white/40 uppercase tracking-widest mb-3 px-2">Navigation</p>
           {config.nav.map((item) => {
-            const isActive = location === item.href || location.startsWith(item.href + "/");
+            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href.split("/:")[0]));
             return (
               <Link key={item.href} href={item.href}>
                 <div
-                  data-testid={`nav-${item.href.replace(/\//g, "-").slice(1)}`}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     isActive
                       ? "bg-white/20 text-white shadow-sm"
@@ -123,7 +127,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <button
             onClick={logout}
-            data-testid="button-logout"
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors mt-1"
           >
             <LogOut size={16} />

@@ -1,0 +1,33 @@
+Conserve l'application actuelle intacte mais applique STRICTEMENT ces corrections ciblées et urgentes :
+
+1. CORRECTION DES TABLEAUX DE BORD PAR RÔLE (Éradication du doublon Conseiller) :
+   - Chaque rôle doit avoir un tableau de bord d'accueil UNIQUEMENT visible par lui dès la connexion. Supprime l'affichage du tableau de bord conseiller chez les autres profils.
+   - Administrateur SI : Son écran d'accueil doit être un Dashboard Technique (Métriques Cloud Azure/OVH, statut des serveurs, logs d'erreurs) et non des graphiques de crédits.
+   - Analyste Risque : Son écran d'accueil doit être le Pipeline / Flux des dossiers de crédit en attente (vue globale de l'équipe).
+
+2. RETOUR DE LA PARTIE "DATA & GOUVERNANCE" (Espace Administrateur) :
+   - Remets immédiatement l'onglet "Administration Data / Gouvernance" dans la navigation latérale de l'Administrateur SI.
+   - Cet onglet doit afficher la visualisation interactive des schémas des tables PostgreSQL (Client, Dossier, Score) et le dictionnaire de données avec les règles de qualité (Data Quality Rules).
+
+3. NAVIGATION ET PAGES MANQUANTES POUR L'ANALYSTE RISQUE :
+   - Ajoute le bouton "Tous les dossiers" dans la barre de navigation de l'Analyste. Cette page doit afficher la liste brute (sans graphiques ni KPIs) de l'intégralité des dossiers de la banque (En attente, En cours, Traités) pour toute l'équipe.
+   - Ajoute l'onglet "Reporting" dans sa navigation : un véritable tableau de bord analytique orienté Risque globale (type Power BI avec graphiques Recharts : répartition des taux de défaut, volume de crédits accordés/refusés par mois).
+
+4. INTÉGRATION DOCUMENTAIRE DANS "NOUVEAU DOSSIER" (Espace Conseiller) :
+   - Dans le formulaire "Nouveau Dossier", tout en bas (juste avant le bouton de soumission final), intègre directement le module d'ingestion documentaire.
+   - Le conseiller doit pouvoir y téléverser via un bouton (ou drag-and-drop) les documents PDF requis (Pièce d'identité, 3 Bulletins de paie, Avis d'imposition) au sein du même parcours de création. 5. RECHERCHE ET FILTRES OPÉRATIONNELS :
+   - Rends les barres de recherche et les menus déroulants de filtrage ("Tous les statuts", "Types de crédit") ENTIÈREMENT FONCTIONNELS sur toutes les pages contenant des listes de dossiers (Conseillers et Analystes). La saisie ou sélection doit filtrer la liste en temps réel.
+
+6. OUVERTURE COMPLÈTE DU DOSSIER (Vraie page de détails avec export PDF) :
+   - Quand le Conseiller ou l'Analyste clique sur un dossier de sa liste, cela doit ouvrir une vraie page dédiée et complète (pas un simple résumé) affichant l'intégralité des informations (Identité, Vie pro, Revenus, Charges, Crédit) ainsi qu'un bouton fonctionnel "Export PDF du Contrat", exactement comme l'écran exemple de Claire Dupont.
+
+7. DOUBLE ZONE DE COMMENTAIRES CONFIDENTIELS (Espace Analyste) :
+   - Dans cet écran détaillé du dossier côté Analyste, crée deux champs textuels distincts :
+     * "Commentaire Général du Dossier" : Partagé et visible par toute la banque (Conseillers et Analystes).
+     * "Notes Internes Risque" : Strictement confidentiel et visible/modifiable UNIQUEMENT par l'équipe des Analystes Risque.
+
+8. COMPLÉMENTS POUR L'ADMINISTRATEUR SI :
+   - Dans l'onglet "Administration Data / Gouvernance", ajoute explicitement les sections "Classification des Données" (Niveaux de sensibilité : Critique, Modéré, Faible) et "Qualité des Données / Dictionnaire de données" pour réintégrer la gestion des référentiels.
+
+9. ENRICHISSEMENT DE L'HISTORIQUE (Jeu de données) :
+   - Ajoute dans le tableau des dossiers fictifs 3 ou 4 anciens dossiers traités, datés entre Janvier et Avril 2026, pour simuler un historique de production réaliste avec des dates variées.
