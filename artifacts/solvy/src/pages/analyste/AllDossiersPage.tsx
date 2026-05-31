@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
-import { useListDossiers } from "@workspace/api-client-react";
+import { useListDossiers, useListDecisions } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FileText, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Search, FileText, ChevronRight, SlidersHorizontal, UserCheck } from "lucide-react";
 
 const statutConfig: Record<string, { label: string; color: string }> = {
-  brouillon: { label: "Brouillon", color: "bg-slate-100 text-slate-600" },
   en_attente_risque: { label: "En attente Risque", color: "bg-amber-50 text-amber-700" },
   en_cours_analyse: { label: "En cours d'analyse", color: "bg-blue-50 text-blue-700" },
   approuve: { label: "Approuvé", color: "bg-emerald-50 text-emerald-700" },
@@ -21,14 +20,27 @@ function formatEur(n: number) {
 }
 
 export default function AllDossiersPage() {
-  const { data: dossiers, isLoading } = useListDossiers();
+  const { data: allDossiers, isLoading } = useListDossiers();
+  const { data: decisions } = useListDecisions();
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("tous");
   const [filterAvis, setFilterAvis] = useState("tous");
   const [sortBy, setSortBy] = useState("date_desc");
 
+  // Build map dossier_id → analyste name from decisions
+  const analysteByDossier = useMemo(() => {
+    const map: Record<number, string> = {};
+    for (const d of decisions || []) {
+      map[d.dossier_id] = d.analyste;
+    }
+    return map;
+  }, [decisions]);
+
+  // Analyste view: NEVER show brouillons
+  const dossiers = useMemo(() => (allDossiers || []).filter(d => d.statut !== "brouillon"), [allDossiers]);
+
   const filtered = useMemo(() => {
-    let list = dossiers || [];
+    let list = dossiers;
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -45,7 +57,6 @@ export default function AllDossiersPage() {
     if (filterStatut !== "tous") list = list.filter(d => d.statut === filterStatut);
     if (filterAvis !== "tous") list = list.filter(d => d.avis_indicatif === filterAvis);
 
-    // Sort
     list = [...list].sort((a, b) => {
       if (sortBy === "date_desc") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       if (sortBy === "date_asc") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -57,13 +68,13 @@ export default function AllDossiersPage() {
     return list;
   }, [dossiers, search, filterStatut, filterAvis, sortBy]);
 
-  const total = dossiers?.length || 0;
+  const DECIDED = new Set(["approuve", "refuse", "conditionnel"]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">Tous les dossiers</h1>
-        <p className="text-slate-500 text-sm mt-1">Vue globale de l'équipe — {total} dossier{total > 1 ? "s" : ""} au total</p>
+        <p className="text-slate-500 text-sm mt-1">Vue globale de l'équipe — {dossiers.length} dossier{dossiers.length > 1 ? "s" : ""} transmis</p>
       </div>
 
       {/* Filters */}
@@ -71,14 +82,14 @@ export default function AllDossiersPage() {
         <div className="relative flex-1 min-w-[220px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Rechercher par client, objet, conseiller, analyste..."
+            placeholder="Rechercher par client, objet, conseiller..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 text-sm"
           />
         </div>
         <Select value={filterStatut} onValueChange={setFilterStatut}>
-          <SelectTrigger className="w-44 text-sm">
+          <SelectTrigger className="w-48 text-sm">
             <SlidersHorizontal size={13} className="mr-1.5 text-slate-400" />
             <SelectValue />
           </SelectTrigger>
@@ -134,13 +145,16 @@ export default function AllDossiersPage() {
                   <th className="text-right text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Montant</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Statut</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Conseiller</th>
+                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Décision</th>
                   <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-4 py-3">Date</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.map(d => {
-                  const sc = statutConfig[d.statut] || statutConfig.brouillon;
+                  const sc = statutConfig[d.statut] || { label: d.statut, color: "bg-slate-100 text-slate-600" };
+                  const analyste = analysteByDossier[d.id];
+                  const isDecided = DECIDED.has(d.statut);
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="px-4 py-3 text-xs text-slate-400 font-mono">#{d.id}</td>
@@ -149,7 +163,7 @@ export default function AllDossiersPage() {
                           {d.client ? `${d.client.prenom} ${d.client.nom}` : `Client #${d.client_id}`}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 max-w-[180px]">
+                      <td className="px-4 py-3 text-sm text-slate-600 max-w-[160px]">
                         <p className="truncate">{d.objet}</p>
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-800 text-sm tabular-nums">{formatEur(d.montant)}</td>
@@ -157,6 +171,20 @@ export default function AllDossiersPage() {
                         <span className={`text-xs font-medium px-2 py-1 rounded-full ${sc.color}`}>{sc.label}</span>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">{d.created_by || "—"}</td>
+                      <td className="px-4 py-3">
+                        {isDecided && analyste ? (
+                          <div className="flex items-center gap-1.5">
+                            <UserCheck size={12} className="text-slate-400 flex-shrink-0" />
+                            <span className="text-xs text-slate-600">
+                              Validé par <span className="font-semibold">{analyste}</span>
+                            </span>
+                          </div>
+                        ) : isDecided ? (
+                          <span className="text-xs text-slate-400 italic">Analyste inconnu</span>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
                         {new Date(d.created_at).toLocaleDateString("fr-FR")}
                       </td>

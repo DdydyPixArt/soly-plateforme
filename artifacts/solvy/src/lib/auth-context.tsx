@@ -14,6 +14,7 @@ interface AuthContextType {
   user: CurrentUser | null;
   login: (identifiant: string, password: string) => boolean;
   logout: () => void;
+  addUser: (login: string, password: string, user: CurrentUser) => void;
 }
 
 const DEMO_USERS: Record<string, { password: string; user: CurrentUser }> = {
@@ -40,6 +41,16 @@ const DEMO_USERS: Record<string, { password: string; user: CurrentUser }> = {
 };
 
 const AUTH_KEY = "solvy_auth_user";
+const CUSTOM_USERS_KEY = "solvy_custom_users";
+
+function loadCustomUsers(): Record<string, { password: string; user: CurrentUser }> {
+  try {
+    const stored = localStorage.getItem(CUSTOM_USERS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -54,11 +65,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = (identifiant: string, password: string): boolean => {
-    const entry = DEMO_USERS[identifiant.trim().toLowerCase()];
-    if (!entry || entry.password !== password) return false;
-    setUser(entry.user);
-    localStorage.setItem(AUTH_KEY, JSON.stringify(entry.user));
-    return true;
+    const key = identifiant.trim().toLowerCase();
+    // Check demo users first
+    const demo = DEMO_USERS[key];
+    if (demo && demo.password === password) {
+      setUser(demo.user);
+      localStorage.setItem(AUTH_KEY, JSON.stringify(demo.user));
+      return true;
+    }
+    // Check dynamically created users
+    const customs = loadCustomUsers();
+    const custom = customs[key];
+    if (custom && custom.password === password) {
+      setUser(custom.user);
+      localStorage.setItem(AUTH_KEY, JSON.stringify(custom.user));
+      return true;
+    }
+    return false;
   };
 
   const logout = () => {
@@ -66,8 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(AUTH_KEY);
   };
 
+  const addUser = (loginKey: string, password: string, newUser: CurrentUser) => {
+    const customs = loadCustomUsers();
+    customs[loginKey.toLowerCase()] = { password, user: newUser };
+    localStorage.setItem(CUSTOM_USERS_KEY, JSON.stringify(customs));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, addUser }}>
       {children}
     </AuthContext.Provider>
   );

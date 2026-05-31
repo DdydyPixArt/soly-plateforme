@@ -271,7 +271,24 @@ export default function NouveauDossierPage() {
                 <FormItem><FormLabel>Durée (mois)</FormLabel><FormControl><Input data-testid="input-duree" type="number" placeholder="240" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="objet" render={({ field }) => (
-                <FormItem><FormLabel>Objet du crédit</FormLabel><FormControl><Input data-testid="input-objet" placeholder="Acquisition résidence principale" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Objet du crédit</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="input-objet">
+                        <SelectValue placeholder="Sélectionner une catégorie..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Immobilier (Résidence Principale)">Immobilier (Résidence Principale)</SelectItem>
+                      <SelectItem value="Immobilier (Investissement Locatif)">Immobilier (Investissement Locatif)</SelectItem>
+                      <SelectItem value="Automobile">Automobile</SelectItem>
+                      <SelectItem value="Travaux / Rénovation">Travaux / Rénovation</SelectItem>
+                      <SelectItem value="Consommation">Consommation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="apport_personnel" render={({ field }) => (
                 <FormItem><FormLabel>Apport personnel (€)</FormLabel><FormControl><Input data-testid="input-apport" type="number" placeholder="30000" {...field} /></FormControl><FormMessage /></FormItem>

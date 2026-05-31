@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { NotificationProvider } from "@/lib/notification-context";
 import AppShell from "@/components/AppShell";
 import LoginPage from "@/pages/LoginPage";
 // Conseiller
@@ -53,39 +54,40 @@ function Router() {
   const home = ROLE_HOME[user.role] || "/login";
 
   return (
-    <AppShell>
-      <Switch>
-        {/* Root redirect based on role */}
-        <Route path="/">{() => <Redirect to={home} />}</Route>
-        <Route path="/login">{() => <Redirect to={home} />}</Route>
+    <NotificationProvider>
+      <AppShell>
+        <Switch>
+          <Route path="/">{() => <Redirect to={home} />}</Route>
+          <Route path="/login">{() => <Redirect to={home} />}</Route>
 
-        {/* Conseiller */}
-        <Route path="/conseiller/dashboard" component={DashboardPage} />
-        <Route path="/conseiller/dossiers" component={DossiersPage} />
-        <Route path="/conseiller/dossier/:id" component={ConseillerDossierDetailPage} />
-        <Route path="/conseiller/nouveau-dossier" component={NouveauDossierPage} />
-        <Route path="/conseiller/documents" component={DocumentsPage} />
+          {/* Conseiller */}
+          <Route path="/conseiller/dashboard" component={DashboardPage} />
+          <Route path="/conseiller/dossiers" component={DossiersPage} />
+          <Route path="/conseiller/dossier/:id" component={ConseillerDossierDetailPage} />
+          <Route path="/conseiller/nouveau-dossier" component={NouveauDossierPage} />
+          <Route path="/conseiller/documents" component={DocumentsPage} />
 
-        {/* Analyste */}
-        <Route path="/analyste/pipeline" component={PipelinePage} />
-        <Route path="/analyste/dossiers" component={AllDossiersPage} />
-        <Route path="/analyste/reporting" component={ReportingPage} />
-        <Route path="/analyste/dossier/:id" component={DossierDetailPage} />
+          {/* Analyste */}
+          <Route path="/analyste/pipeline" component={PipelinePage} />
+          <Route path="/analyste/dossiers" component={AllDossiersPage} />
+          <Route path="/analyste/reporting" component={ReportingPage} />
+          <Route path="/analyste/dossier/:id" component={DossierDetailPage} />
 
-        {/* Admin */}
-        <Route path="/admin/dashboard" component={AdminDashboardPage} />
-        <Route path="/admin/utilisateurs" component={UsersPage} />
-        <Route path="/admin/scoring" component={ScoringSettingsPage} />
-        <Route path="/admin/infrastructure" component={InfrastructurePage} />
-        <Route path="/admin/data-gouvernance" component={DataGouvernancePage} />
+          {/* Admin */}
+          <Route path="/admin/dashboard" component={AdminDashboardPage} />
+          <Route path="/admin/utilisateurs" component={UsersPage} />
+          <Route path="/admin/scoring" component={ScoringSettingsPage} />
+          <Route path="/admin/infrastructure" component={InfrastructurePage} />
+          <Route path="/admin/data-gouvernance" component={DataGouvernancePage} />
 
-        {/* Conformite */}
-        <Route path="/conformite/audit" component={AuditPage} />
-        <Route path="/conformite/archives" component={ArchivesPage} />
+          {/* Conformite */}
+          <Route path="/conformite/audit" component={AuditPage} />
+          <Route path="/conformite/archives" component={ArchivesPage} />
 
-        <Route component={NotFound} />
-      </Switch>
-    </AppShell>
+          <Route component={NotFound} />
+        </Switch>
+      </AppShell>
+    </NotificationProvider>
   );
 }
 

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Plus, Pause, Trash2, CheckCircle, AlertTriangle, Key, X } from "lucide-react";
+import { useAuth, type Role } from "@/lib/auth-context";
+import { Users, Plus, Pause, Trash2, CheckCircle, AlertTriangle, Key, X, Copy } from "lucide-react";
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ interface User {
   status: "actif" | "suspendu";
   lastLogin: string;
   mfa: boolean;
+  tempPassword?: string;
 }
 
 const INITIAL_USERS: User[] = [
@@ -39,11 +41,17 @@ const roleColors: Record<string, string> = {
   conformite: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
+function generatePassword() {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
+  return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [showForm, setShowForm] = useState(false);
   const [newUser, setNewUser] = useState({ prenom: "", nom: "", login: "", role: "" });
   const { toast } = useToast();
+  const { addUser } = useAuth();
 
   const handleToggleStatus = (id: string) => {
     setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === "actif" ? "suspendu" : "actif" } : u));
@@ -62,17 +70,44 @@ export default function UsersPage() {
       toast({ title: "Champs requis manquants", variant: "destructive" });
       return;
     }
+
+    const tempPassword = generatePassword();
+    const login = newUser.login.trim().toLowerCase();
+    const displayName = `${newUser.prenom} ${newUser.nom}`;
+
+    // Register in auth system so the user can actually log in
+    addUser(login, tempPassword, {
+      login,
+      prenom: newUser.prenom.trim(),
+      nom: newUser.nom.trim(),
+      role: newUser.role as Role,
+      displayName,
+    });
+
     const user: User = {
       id: Date.now().toString(),
-      ...newUser,
+      login,
+      prenom: newUser.prenom,
+      nom: newUser.nom,
+      role: newUser.role,
       status: "actif",
-      lastLogin: "Jamais",
+      lastLogin: "Jamais connecté",
       mfa: false,
+      tempPassword,
     };
     setUsers(prev => [...prev, user]);
     setNewUser({ prenom: "", nom: "", login: "", role: "" });
     setShowForm(false);
-    toast({ title: "Utilisateur créé", description: `${user.prenom} ${user.nom} — ${roleLabels[user.role]}` });
+    toast({
+      title: "Compte créé avec succès",
+      description: `${displayName} — Identifiant : ${login} — Mot de passe temporaire : ${tempPassword}`,
+      duration: 8000,
+    });
+  };
+
+  const copyPassword = (pwd: string) => {
+    navigator.clipboard.writeText(pwd).catch(() => {});
+    toast({ title: "Mot de passe copié", duration: 2000 });
   };
 
   const active = users.filter(u => u.status === "actif").length;
@@ -116,6 +151,7 @@ export default function UsersPage() {
         <Card className="border-0 shadow-sm mb-6 border-l-4 border-l-[hsl(345,65%,28%)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-slate-700">Créer un nouvel utilisateur</CardTitle>
+            <p className="text-xs text-slate-400 mt-1">Un mot de passe temporaire sera généré automatiquement. L'utilisateur pourra se connecter immédiatement avec ses identifiants.</p>
           </CardHeader>
           <CardContent className="grid grid-cols-4 gap-3">
             <Input data-testid="input-new-prenom" placeholder="Prénom" value={newUser.prenom} onChange={e => setNewUser(v => ({ ...v, prenom: e.target.value }))} />
@@ -129,7 +165,9 @@ export default function UsersPage() {
             </Select>
             <div className="col-span-4 flex justify-end gap-3 pt-2 border-t border-slate-100 mt-1">
               <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
-              <Button data-testid="button-save-user" onClick={handleCreate} className="bg-[hsl(345,65%,28%)] hover:bg-[hsl(345,65%,24%)] text-white">Créer l'utilisateur</Button>
+              <Button data-testid="button-save-user" onClick={handleCreate} className="bg-[hsl(345,65%,28%)] hover:bg-[hsl(345,65%,24%)] text-white">
+                Créer l'utilisateur
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -160,6 +198,15 @@ export default function UsersPage() {
                   <td className="px-4 py-3">
                     <p className="font-medium text-slate-800 text-sm">{u.prenom} {u.nom}</p>
                     <p className="text-xs text-slate-400">{u.login}</p>
+                    {u.tempPassword && (
+                      <div className="flex items-center gap-1.5 mt-1 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                        <Key size={10} className="text-amber-600 flex-shrink-0" />
+                        <span className="text-[10px] font-mono text-amber-700 select-all">{u.tempPassword}</span>
+                        <button onClick={() => copyPassword(u.tempPassword!)} className="text-amber-500 hover:text-amber-700 ml-auto flex-shrink-0">
+                          <Copy size={10} />
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${roleColors[u.role] || "bg-slate-100 text-slate-600 border-slate-200"}`}>

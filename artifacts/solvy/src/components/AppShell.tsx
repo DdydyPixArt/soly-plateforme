@@ -1,11 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { useAuth, type Role } from "@/lib/auth-context";
+import { useNotifications } from "@/lib/notification-context";
 import {
   FileText, Upload, LayoutDashboard, BarChart2,
   Database, Server, Shield, Archive,
   LogOut, Building2, Users, Settings, ChevronRight,
-  List, TrendingUp, BookOpen, Activity
+  List, TrendingUp, BookOpen, Activity, Bell, X,
+  AlertCircle, CheckCircle2
 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 interface NavItem {
   label: string;
@@ -61,6 +64,92 @@ const roleColors: Record<Role, string> = {
   conformite: "bg-emerald-500/20 text-emerald-200",
 };
 
+function NotificationPanel() {
+  const { notifications, unreadCount, markAsRead, markAllRead, clearAll } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+        title="Notifications"
+      >
+        <Bell size={15} className="text-white/80" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-10 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <p className="text-sm font-semibold text-slate-800">Notifications</p>
+            <div className="flex items-center gap-2">
+              {notifications.length > 0 && (
+                <>
+                  <button onClick={markAllRead} className="text-xs text-blue-600 hover:underline">Tout lire</button>
+                  <span className="text-slate-300">·</span>
+                  <button onClick={clearAll} className="text-xs text-slate-400 hover:text-red-500">Effacer</button>
+                </>
+              )}
+              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 ml-1">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* List */}
+          {notifications.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">
+              <Bell size={24} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Aucune notification</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
+              {notifications.map(n => (
+                <div
+                  key={n.id}
+                  onClick={() => markAsRead(n.id)}
+                  className={`flex gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors ${n.read ? "opacity-60" : ""}`}
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    n.type === "nouveau_dossier" ? "bg-amber-100" : n.type === "decision" ? "bg-emerald-100" : "bg-blue-100"
+                  }`}>
+                    {n.type === "nouveau_dossier"
+                      ? <AlertCircle size={13} className="text-amber-600" />
+                      : <CheckCircle2 size={13} className="text-emerald-600" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-semibold ${n.read ? "text-slate-500" : "text-slate-800"}`}>{n.title}</p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{n.message}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {n.timestamp.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
@@ -86,11 +175,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* User identity */}
+        {/* User identity + notifications */}
         <div className="px-4 py-4 border-b border-sidebar-border/40">
           <div className="px-3 py-2.5 rounded-xl bg-white/10">
-            <p className="text-sm font-semibold text-white">{user.displayName}</p>
-            <p className="text-xs text-white/50 mt-0.5">{user.login}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.displayName}</p>
+                <p className="text-xs text-white/50 mt-0.5 truncate">{user.login}</p>
+              </div>
+              <NotificationPanel />
+            </div>
             <span className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full ${roleColors[user.role]}`}>
               {config.section}
             </span>

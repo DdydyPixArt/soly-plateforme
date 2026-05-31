@@ -1,10 +1,16 @@
+import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useGetDossier, type Dossier } from "@workspace/api-client-react";
+import { useGetDossier, useGetDossierScore, useUpdateDossier, getListDossiersQueryKey, type Dossier } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SolvencyGauge from "@/components/SolvencyGauge";
 import {
   ArrowLeft, Printer, User, Briefcase, CreditCard, FileText,
-  CheckCircle, XCircle, Clock, AlertTriangle, Building2
+  CheckCircle, XCircle, Clock, AlertTriangle, Building2, Edit2, Save, X
 } from "lucide-react";
 
 const statutConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -15,6 +21,14 @@ const statutConfig: Record<string, { label: string; color: string; icon: React.R
   refuse: { label: "Refusé", color: "bg-red-50 text-red-700", icon: <XCircle size={14} /> },
   conditionnel: { label: "Conditionnel", color: "bg-purple-50 text-purple-700", icon: <AlertTriangle size={14} /> },
 };
+
+const OBJET_OPTIONS = [
+  "Immobilier (Résidence Principale)",
+  "Immobilier (Investissement Locatif)",
+  "Automobile",
+  "Travaux / Rénovation",
+  "Consommation",
+];
 
 function formatEur(n: number) {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -29,12 +43,134 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
   );
 }
 
+function ScoreCard({ dossierId }: { dossierId: number }) {
+  const { data: scoreData } = useGetDossierScore(dossierId, {
+    query: { queryKey: ["score", dossierId] }
+  });
+
+  if (!scoreData) return null;
+
+  return (
+    <Card className="border-0 shadow-sm print:hidden">
+      <CardHeader className="pb-3 border-b border-slate-100">
+        <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <CreditCard size={14} className="text-[hsl(345,65%,28%)]" /> Score de solvabilité
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 flex flex-col items-center">
+        <SolvencyGauge score={scoreData.score} size="sm" />
+        <p className="text-[10px] text-slate-400 mt-4 text-center">
+          Calcul indicatif — modèle d'aide à la décision interne
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EditForm({ dossier, onCancel, onSaved }: {
+  dossier: Dossier;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [data, setData] = useState({
+    montant: dossier.montant,
+    duree_mois: dossier.duree_mois,
+    objet: dossier.objet,
+    apport_personnel: dossier.apport_personnel ?? 0,
+  });
+  const update = useUpdateDossier();
+
+  const save = () => {
+    if (!data.montant || !data.duree_mois || !data.objet) {
+      toast({ title: "Champs requis manquants", variant: "destructive" });
+      return;
+    }
+    update.mutate(
+      { id: dossier.id, data },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListDossiersQueryKey() });
+          queryClient.invalidateQueries({ queryKey: ["dossier", dossier.id] });
+          toast({ title: "Dossier mis à jour", description: "Les modifications ont été enregistrées." });
+          onSaved();
+        },
+        onError: () => {
+          toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
+        },
+      }
+    );
+  };
+
+  return (
+    <Card className="border-0 shadow-sm border-l-4 border-l-[hsl(345,65%,28%)] mb-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <Edit2 size={14} className="text-[hsl(345,65%,28%)]" /> Modifier le dossier (brouillon)
+        </CardTitle>
+        <p className="text-xs text-slate-400">Corrigez les informations avant de transmettre à l'analyse.</p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1.5">Montant demandé (€)</label>
+            <Input
+              type="number"
+              value={data.montant}
+              onChange={e => setData(p => ({ ...p, montant: Number(e.target.value) }))}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1.5">Durée (mois)</label>
+            <Input
+              type="number"
+              value={data.duree_mois}
+              onChange={e => setData(p => ({ ...p, duree_mois: Number(e.target.value) }))}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1.5">Objet du crédit</label>
+            <Select value={data.objet} onValueChange={v => setData(p => ({ ...p, objet: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {OBJET_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1.5">Apport personnel (€)</label>
+            <Input
+              type="number"
+              value={data.apport_personnel}
+              onChange={e => setData(p => ({ ...p, apport_personnel: Number(e.target.value) }))}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+          <Button variant="outline" onClick={onCancel} className="gap-1.5">
+            <X size={14} /> Annuler
+          </Button>
+          <Button
+            onClick={save}
+            disabled={update.isPending}
+            className="bg-[hsl(345,65%,28%)] hover:bg-[hsl(345,65%,24%)] text-white gap-1.5"
+          >
+            <Save size={14} /> Enregistrer les modifications
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function PrintableContent({ dossier }: { dossier: Dossier }) {
   const client = dossier.client;
   const sc = statutConfig[dossier.statut] || statutConfig.brouillon;
-  const mensualite = dossier.montant / dossier.duree_mois;
-  const tauxAnn = 0.0365; // indicatif
+  const tauxAnn = 0.0365;
   const mensualiteCredit = (dossier.montant * (tauxAnn / 12)) / (1 - Math.pow(1 + tauxAnn / 12, -dossier.duree_mois));
+  const [editMode, setEditMode] = useState(false);
+  const isBrouillon = dossier.statut === "brouillon";
 
   return (
     <>
@@ -63,7 +199,7 @@ function PrintableContent({ dossier }: { dossier: Dossier }) {
             <ArrowLeft size={16} /> Retour à mes dossiers
           </button>
         </Link>
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">
               Dossier #{dossier.id} — {client ? `${client.prenom} ${client.nom}` : "Client inconnu"}
@@ -74,19 +210,49 @@ function PrintableContent({ dossier }: { dossier: Dossier }) {
             <span className={`flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-full ${sc.color}`}>
               {sc.icon} {sc.label}
             </span>
+            {isBrouillon && !editMode && (
+              <Button
+                onClick={() => setEditMode(true)}
+                variant="outline"
+                className="gap-2 border-[hsl(345,65%,28%)] text-[hsl(345,65%,28%)] hover:bg-[hsl(345,65%,28%)] hover:text-white"
+                data-testid="button-modifier"
+              >
+                <Edit2 size={15} /> Modifier
+              </Button>
+            )}
             <Button
               onClick={() => window.print()}
               className="gap-2 bg-[hsl(345,65%,28%)] hover:bg-[hsl(345,65%,24%)] text-white"
               data-testid="button-export-pdf"
             >
-              <Printer size={15} /> Export PDF du Contrat
+              <Printer size={15} /> Export PDF
             </Button>
           </div>
         </div>
+
+        {/* Brouillon edit notice */}
+        {isBrouillon && !editMode && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-6">
+            <AlertTriangle size={15} className="text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-700">
+              Ce dossier est un brouillon. Il n'est pas encore visible par l'équipe Risque.
+              Cliquez sur <strong>Modifier</strong> pour corriger les informations avant de transmettre.
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* Edit form */}
+      {editMode && (
+        <EditForm
+          dossier={dossier}
+          onCancel={() => setEditMode(false)}
+          onSaved={() => setEditMode(false)}
+        />
+      )}
+
       {/* Content grid */}
-      <div className="grid grid-cols-3 gap-6 print:grid-cols-3 print:gap-4">
+      <div className={`grid gap-6 print:gap-4 ${isBrouillon ? "grid-cols-3" : "grid-cols-4"}`}>
         {/* Identité */}
         {client && (
           <Card className="border-0 shadow-sm print:shadow-none print:border print:border-slate-200">
@@ -143,6 +309,9 @@ function PrintableContent({ dossier }: { dossier: Dossier }) {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Score gauge — only for non-brouillon (score might not exist for drafts) */}
+        {!isBrouillon && <ScoreCard dossierId={dossier.id} />}
       </div>
 
       {/* Documents */}
